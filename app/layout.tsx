@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from '@/components/ThemeProvider'
 import Toast from '@/components/Toast'
+import LoadingProvider from '@/components/LoadingProvider'
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -27,13 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${plusJakartaSans.variable} antialiased`}
       >
         <ThemeProvider>
-          {children}
-          <Toast />
+          <LoadingProvider>
+            {children}
+            <Toast />
+          </LoadingProvider>
         </ThemeProvider>
       </body>
     </html>

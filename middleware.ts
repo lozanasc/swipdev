@@ -4,7 +4,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
   
-  // Create supabase server client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -43,16 +42,25 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
-  // Check auth condition
-  if (!session) {
-    // Redirect to login if accessing protected routes
+  // Redirect authenticated users away from auth pages
+  if (session && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Allow access to onboarding
+  if (request.nextUrl.pathname.startsWith('/onboarding')) {
+    return response
+  }
+
+  // Check auth condition for protected routes
+  if (!session && request.nextUrl.pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return response
 }
 
-// Specify which routes to protect
+// Update matcher to include auth routes
 export const config = {
-  matcher: ['/dashboard/:path*', '/profile/:path*', '/projects/:path*']
+  matcher: ['/dashboard/:path*', '/onboarding', '/login', '/signup']
 } 
