@@ -4,20 +4,22 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { OnboardingFormData } from '@/types/onboarding'
+import { useProfile } from '@/hooks/useProfile'
+import { useToastStore } from '@/store/toastStore'
+import LoadingScreen from '@/components/LoadingScreen'
 import BasicInfoStep from './components/BasicInfoStep'
 import DeveloperSkillsStep from './components/DeveloperSkillsStep'
 import CompanyInfoStep from './components/CompanyInfoStep'
 import CompanyDetailsStep from './components/CompanyDetailsStep'
 import DeveloperExperienceStep from './components/DeveloperExperienceStep'
 import DeveloperPortfolioStep from './components/DeveloperPortfolioStep'
-import { useProfile } from '@/hooks/useProfile'
-import { useLoadingStore } from '@/store/loadingStore'
 
 const OnboardingPage = () => {
   const router = useRouter()
   const { user } = useAuthStore()
   const { createProfile } = useProfile()
-  const { setLoading } = useLoadingStore()
+  const { addToast } = useToastStore()
+  const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState<OnboardingFormData>({
     // Common fields
@@ -47,15 +49,10 @@ const OnboardingPage = () => {
   }, [user, router])
 
   const handleNext = async () => {
-    try {
-      setLoading(true, 'Saving progress...')
-      if (step === getMaxSteps()) {
-        await handleSubmit()
-      } else {
-        setStep(step + 1)
-      }
-    } finally {
-      setLoading(false)
+    if (step === getMaxSteps()) {
+      await handleSubmit()
+    } else {
+      setStep(step + 1)
     }
   }
 
@@ -69,15 +66,27 @@ const OnboardingPage = () => {
 
   const handleSubmit = async () => {
     try {
-      setLoading(true, 'Creating your profile...')
+      setIsLoading(true)
       await createProfile(formData)
+      addToast({
+        type: 'success',
+        message: 'Profile created successfully!'
+      })
       router.push('/dashboard')
     } catch (error) {
-      console.error('Error saving profile:', error)
-      // Add toast notification here for error
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+      console.error('Error saving profile:', errorMessage)
+      addToast({
+        type: 'error',
+        message: errorMessage
+      })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
+  }
+
+  if (isLoading) {
+    return <LoadingScreen message="Creating your profile..." />
   }
 
   const renderStep = () => {

@@ -1,18 +1,15 @@
 import { create } from 'zustand';
 import { Project, ProjectTask } from '@/types';
+import { getBrowserSupabaseClient } from '@/lib/supabase/browser-client';
 
 interface ProjectState {
   projects: Project[];
   currentProject: Project | null;
   isLoading: boolean;
   error: string | null;
-  setProjects: (projects: Project[]) => void;
-  setCurrentProject: (project: Project | null) => void;
-  addProject: (project: Project) => void;
-  updateProject: (projectId: string, updates: Partial<Project>) => void;
-  updateTask: (projectId: string, taskId: string, updates: Partial<ProjectTask>) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
+  fetchProjects: () => Promise<void>;
+  fetchProject: (id: string) => Promise<void>;
+  updateTask: (projectId: string, taskId: string, updates: Partial<ProjectTask>) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -20,29 +17,98 @@ export const useProjectStore = create<ProjectState>((set) => ({
   currentProject: null,
   isLoading: false,
   error: null,
-  setProjects: (projects) => set({ projects }),
-  setCurrentProject: (project) => set({ currentProject: project }),
-  addProject: (project) =>
-    set((state) => ({ projects: [...state.projects, project] })),
-  updateProject: (projectId, updates) =>
-    set((state) => ({
-      projects: state.projects.map((p) =>
-        p.id === projectId ? { ...p, ...updates } : p
-      ),
-    })),
-  updateTask: (projectId, taskId, updates) =>
-    set((state) => ({
-      projects: state.projects.map((p) =>
-        p.id === projectId
+
+  fetchProjects: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const supabase = getBrowserSupabaseClient();
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          tasks:project_tasks(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      set({ 
+        projects: data as Project[],
+        isLoading: false 
+      });
+    } catch (error) {
+      set({ 
+        error: (error as Error).message,
+        isLoading: false 
+      });
+    }
+  },
+
+  fetchProject: async (id: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      const supabase = createClient();
+      
+      const { data, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          tasks:project_tasks(*)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      set({ 
+        currentProject: data as Project,
+        isLoading: false 
+      });
+    } catch (error) {
+      set({ 
+        error: (error as Error).message,
+        isLoading: false 
+      });
+    }
+  },
+
+  updateTask: async (projectId: string, taskId: string, updates: Partial<ProjectTask>) => {
+    try {
+      set({ error: null });
+      const supabase = createClient();
+      
+      const { error } = await supabase
+        .from('project_tasks')
+        .update(updates)
+        .eq('id', taskId)
+        .eq('project_id', projectId);
+
+      if (error) throw error;
+
+      // Update local state
+      set((state) => ({
+        projects: state.projects.map((p) =>
+          p.id === projectId
+            ? {
+                ...p,
+                tasks: p.tasks.map((t) =>
+                  t.id === taskId ? { ...t, ...updates } : t
+                ),
+              }
+            : p
+        ),
+        currentProject: state.currentProject?.id === projectId
           ? {
-              ...p,
-              tasks: p.tasks.map((t) =>
+              ...state.currentProject,
+              tasks: state.currentProject.tasks.map((t) =>
                 t.id === taskId ? { ...t, ...updates } : t
               ),
             }
-          : p
-      ),
-    })),
-  setLoading: (loading) => set({ isLoading: loading }),
-  setError: (error) => set({ error }),
+          : state.currentProject
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message });
+    }
+  },
 })); 

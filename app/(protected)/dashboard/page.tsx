@@ -1,8 +1,12 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/store/authStore'
+import { useProfileStore } from '@/store/profileStore'
+import LoadingScreen from '@/components/LoadingScreen'
 import DashboardHeader from '@/app/(protected)/components/DashboardHeader'
 import DashboardSidebar from '@/app/(protected)/components/DashboardSidebar'
-import { useAuthStore } from '@/store/authStore'
 import { ArrowUpRight, Users, DollarSign, Briefcase } from 'lucide-react'
 
 const stats = [
@@ -27,7 +31,19 @@ const stats = [
 ]
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { user } = useAuthStore()
+  const { isLoading } = useProfileStore()
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+    }
+  }, [user, router])
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading your profile..." />
+  }
 
   return (
     <div className="min-h-screen bg-background">

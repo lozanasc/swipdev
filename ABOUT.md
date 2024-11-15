@@ -21,7 +21,7 @@ I'll help you break down this Filipino developer-focused freelancing platform in
 * AI-powered project/requirement analysis
 * Automated task breakdown and Kanban generation
 
-## Task Breakdown for MVP  
+## Task Breakdown for MVP
 
 1. Authentication & User Management
    * Supabase auth setup with email/social logins

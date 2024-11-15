@@ -27,8 +27,7 @@ export function useAuth() {
 
   const signUp = async ({ email, password, fullName, userType }: SignUpData) => {
     try {
-      setIsLoading(true)
-      setLoading(true, 'Creating your account...')
+      await setLoading(true, 'Creating your account...')
       setError(null)
 
       const { data, error } = await supabase.auth.signUp({
@@ -56,15 +55,14 @@ export function useAuth() {
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
-      setIsLoading(false)
-      setLoading(false)
+      await setLoading(false)
     }
   }
 
   const signIn = async ({ email, password }: SignInData) => {
     try {
       setIsLoading(true)
-      setLoading(true, 'Signing you in...')
+      await setLoading(true, 'Signing you in...')
       setError(null)
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -82,7 +80,7 @@ export function useAuth() {
       setError(err instanceof Error ? err.message : 'An error occurred during sign in')
     } finally {
       setIsLoading(false)
-      setLoading(false)
+      await setLoading(false)
     }
   }
 

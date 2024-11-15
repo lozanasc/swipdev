@@ -51,10 +51,11 @@ export interface Project {
 export interface ProjectTask {
   id: string;
   title: string;
-  description: string;
-  estimate: string;
-  type: string;
-  status: 'todo' | 'inProgress' | 'done';
+  description?: string;
+  estimate?: string;
+  task_type: 'setup' | 'frontend' | 'backend' | 'design' | 'testing';
+  status: 'todo' | 'inProgress' | 'review' | 'done';
+  order_index: number;
 }
 
 export interface Match {
