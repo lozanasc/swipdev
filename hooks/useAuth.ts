@@ -19,6 +19,7 @@ interface SignInData {
 
 export function useAuth() {
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const supabase = getBrowserSupabaseClient()
   const { setUser } = useAuthStore()
@@ -26,6 +27,7 @@ export function useAuth() {
 
   const signUp = async ({ email, password, fullName, userType }: SignUpData) => {
     try {
+      setIsLoading(true)
       setLoading(true, 'Creating your account...')
       setError(null)
 
@@ -54,12 +56,14 @@ export function useAuth() {
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
+      setIsLoading(false)
       setLoading(false)
     }
   }
 
   const signIn = async ({ email, password }: SignInData) => {
     try {
+      setIsLoading(true)
       setLoading(true, 'Signing you in...')
       setError(null)
 
@@ -77,9 +81,10 @@ export function useAuth() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during sign in')
     } finally {
+      setIsLoading(false)
       setLoading(false)
     }
   }
 
-  return { signUp, signIn, error }
+  return { signUp, signIn, error, isLoading }
 } 

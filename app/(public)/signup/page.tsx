@@ -21,11 +21,9 @@ const SignupPage = () => {
     userType: '' as 'developer' | 'employer' | ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const { signUp, isLoading, error } = useAuth()
+  const { signUp } = useAuth()
   const { addToast, removeToast } = useToastStore()
 
-  console.log(isLoading)
-  console.log(error)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
